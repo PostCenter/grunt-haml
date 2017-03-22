@@ -134,7 +134,7 @@ module.exports = function(grunt) {
     var haml = require('haml');
 
     // First pass; generate the javascript method.
-    var output = haml(options.input);
+    var output = haml(concatenateAttributeBlocks(options.input));
 
     if (options.target === 'html') {
       // Evaluate method with the context and return it.
@@ -278,5 +278,53 @@ module.exports = function(grunt) {
 
       callback(output);
     });
+  };
+
+  /**
+   * Concatenates multiline haml attributes so that the haml-js preprocessor
+   * doesn't choke on them.
+   */
+  var concatenateAttributeBlocks = function (input) {
+
+    return concatenate(input);
+
+    function concatenate(content) {
+
+      var OPEN_REGEX = /^\s*[\.%][\-_\.#a-zA-Z]+([\({])('[^']*'|"[^"]*"|[^'"\)}])*$/;
+      var lines = content.split(/\n/);
+
+      for (var ii = 0; ii < lines.length; ii++) {
+        var match = lines[ii].match(OPEN_REGEX);
+        if (match) {
+          var closeCharacter = match[1] == '(' ? ')' : '}';
+          var closeIndex = findClose(lines, ii, closeCharacter);
+          if (closeIndex < ii) {
+            console.error('No close character found [%s]!', closeCharacter);
+            continue;
+          }
+          var attributeLines = lines.splice(ii + 1, closeIndex - ii);
+          var concatenated = attributeLines.map(function(line) { return line.trim(); }).join(' ');
+          lines[ii] = [lines[ii], concatenated].join(' ');
+        }
+      }
+      return lines.join('\n');
+    };
+
+    function findClose(lines, openIndex, closeCharacter) {
+
+      var CLOSE_REGEX = /^('[^']*'|"[^"]*"|[^'"])*([\)}]).*$/;
+
+      for (var ii = openIndex + 1; ii < lines.length; ii++) {
+        var match = lines[ii].match(CLOSE_REGEX);
+        if (match) {
+          if (match[2] != closeCharacter) {
+            console.error('Found the wrong close character [%s]!', match);
+            return -1;
+          }
+          return ii;
+        }
+      }
+      return -1;
+    };
   };
 };
