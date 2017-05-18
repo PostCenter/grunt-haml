@@ -291,7 +291,8 @@ module.exports = function(grunt) {
     function concatenate(content) {
 
       var OPEN_REGEX = /^\s*[\.%][\-_\.#a-zA-Z]+([\({])('[^']*'|"[^"]*"|[^'"\)}])*$/;
-      var lines = content.split(/\n/);
+
+      var lines = content.split(/\r\n|\r|\n/);
 
       for (var ii = 0; ii < lines.length; ii++) {
         var match = lines[ii].match(OPEN_REGEX);
