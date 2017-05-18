@@ -116,7 +116,7 @@ module.exports = function(grunt) {
 
     try {
       switch (options.language) {
-      case 'js': transpileJs(options, cb); break;
+      case 'js': transpileJs(options, cb, name); break;
       case 'coffee': transpileCoffee(options, cb); break;
       case 'ruby': transpileRuby(options, cb); break;
       default:
@@ -130,11 +130,11 @@ module.exports = function(grunt) {
     }
   };
 
-  var transpileJs = function(options, cb) {
+  var transpileJs = function(options, cb, name) {
     var haml = require('haml');
 
     // First pass; generate the javascript method.
-    var output = haml(concatenateAttributeBlocks(options.input));
+    var output = haml(concatenateAttributeBlocks(options.input, name));
 
     if (options.target === 'html') {
       // Evaluate method with the context and return it.
@@ -284,7 +284,7 @@ module.exports = function(grunt) {
    * Concatenates multiline haml attributes so that the haml-js preprocessor
    * doesn't choke on them.
    */
-  var concatenateAttributeBlocks = function (input) {
+  var concatenateAttributeBlocks = function (input, name) {
 
     return concatenate(input);
 
@@ -299,7 +299,7 @@ module.exports = function(grunt) {
           var closeCharacter = match[1] == '(' ? ')' : '}';
           var closeIndex = findClose(lines, ii, closeCharacter);
           if (closeIndex < ii) {
-            console.error('No close character found [%s]!', closeCharacter);
+            console.error('%s: No close character found [%s]!', name, closeCharacter);
             continue;
           }
           var attributeLines = lines.splice(ii + 1, closeIndex - ii);
